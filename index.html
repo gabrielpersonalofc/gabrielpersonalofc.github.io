@@ -118,24 +118,25 @@
     .btn-outline:hover { border-color: var(--red); color: var(--red); }
 
     /* ─── SCROLL REVEAL ANIMATIONS ───────────────────── */
-    .reveal {
+    /* Elements visible by default; JS adds .js-ready to body to enable animations */
+    .js-ready .reveal {
       opacity: 0;
       transform: translateY(40px);
       transition: opacity 0.7s ease, transform 0.7s ease;
     }
-    .reveal.active { opacity: 1; transform: translateY(0); }
-    .reveal-left {
+    .reveal.active { opacity: 1; transform: translateY(0) !important; transition: opacity 0.7s ease, transform 0.7s ease; }
+    .js-ready .reveal-left {
       opacity: 0;
       transform: translateX(-40px);
       transition: opacity 0.7s ease, transform 0.7s ease;
     }
-    .reveal-left.active { opacity: 1; transform: translateX(0); }
-    .reveal-right {
+    .reveal-left.active { opacity: 1; transform: translateX(0) !important; transition: opacity 0.7s ease, transform 0.7s ease; }
+    .js-ready .reveal-right {
       opacity: 0;
       transform: translateX(40px);
       transition: opacity 0.7s ease, transform 0.7s ease;
     }
-    .reveal-right.active { opacity: 1; transform: translateX(0); }
+    .reveal-right.active { opacity: 1; transform: translateX(0) !important; transition: opacity 0.7s ease, transform 0.7s ease; }
     .delay-1 { transition-delay: 0.1s; }
     .delay-2 { transition-delay: 0.2s; }
     .delay-3 { transition-delay: 0.3s; }
@@ -1935,10 +1936,15 @@
   });
 
   // ── Scroll reveal ──────────────────────────────────────
+  // Enable animations only after JS is ready — content always visible as fallback
+  document.body.classList.add('js-ready');
+  const revealEls = document.querySelectorAll('.reveal, .reveal-left, .reveal-right');
   const revealObserver = new IntersectionObserver((entries) => {
-    entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('active'); });
-  }, { threshold: 0.12, rootMargin: '0px 0px -40px 0px' });
-  document.querySelectorAll('.reveal, .reveal-left, .reveal-right').forEach(el => revealObserver.observe(el));
+    entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('active'); revealObserver.unobserve(e.target); } });
+  }, { threshold: 0.08, rootMargin: '0px 0px -20px 0px' });
+  revealEls.forEach(el => revealObserver.observe(el));
+  // Safety fallback: force all visible after 2s in case observer doesn't fire
+  setTimeout(() => revealEls.forEach(el => el.classList.add('active')), 2000);
 
   // ── FAQ accordion ──────────────────────────────────────
   document.querySelectorAll('.faq-question').forEach(q => {
